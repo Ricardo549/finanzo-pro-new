@@ -1,0 +1,17 @@
+{
+    "name": "Finanzo Pro",
+    "short_name": "Finanzo",
+    "description": "Seu consultor financeiro brother.",
+    "start_url": "./",
+    "display": "standalone",
+    "background_color": "#fcfdfe",
+    "theme_color": "#4f46e5",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "/vite.svg",
+            "type": "image/svg+xml",
+            "sizes": "512x512"
+        }
+    ]
+}
