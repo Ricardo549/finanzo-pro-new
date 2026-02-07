@@ -1,5 +1,5 @@
 import { api } from './api';
-import { Project } from '../types';
+import { Project } from '@/types';
 import { ProjectSchema } from './schemas';
 import { supabase } from './supabase';
 
@@ -8,7 +8,9 @@ const ENABLE_MOCKS = import.meta.env.VITE_ENABLE_MOCKS === 'true';
 
 export const projectService = {
     getAll: async (): Promise<Project[]> => {
-        if (!ENABLE_MOCKS && supabase) {
+        if (!ENABLE_MOCKS) {
+            if (!supabase) throw new Error('Supabase client not initialized. Check your environment variables.');
+
             const { data, error } = await supabase
                 .from('projects')
                 .select('*');
@@ -40,7 +42,9 @@ export const projectService = {
         const validation = ProjectSchema.safeParse(project);
         if (!validation.success) throw new Error(validation.error.errors[0].message);
 
-        if (!ENABLE_MOCKS && supabase) {
+        if (!ENABLE_MOCKS) {
+            if (!supabase) throw new Error('Supabase client not initialized. Check your environment variables.');
+
             // Get current user
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error('Usuário não autenticado');
@@ -84,7 +88,9 @@ export const projectService = {
     },
 
     update: async (id: string, updates: Partial<Project>): Promise<Project> => {
-        if (!ENABLE_MOCKS && supabase) {
+        if (!ENABLE_MOCKS) {
+            if (!supabase) throw new Error('Supabase client not initialized. Check your environment variables.');
+
             // Map CamelCase (App) -> Snake_case (DB) if needed
             const dbPayload: any = {};
             if (updates.name) dbPayload.name = updates.name;
@@ -124,7 +130,9 @@ export const projectService = {
     },
 
     delete: async (id: string): Promise<void> => {
-        if (!ENABLE_MOCKS && supabase) {
+        if (!ENABLE_MOCKS) {
+            if (!supabase) throw new Error('Supabase client not initialized. Check your environment variables.');
+
             const { error } = await supabase
                 .from('projects')
                 .delete()

@@ -13,4 +13,8 @@ export const supabase = (supabaseUrl && supabaseKey && isValidUrl(supabaseUrl))
     ? createClient(supabaseUrl, supabaseKey)
     : null;
 
+if (!supabase && import.meta.env.VITE_ENABLE_MOCKS !== 'true') {
+    console.warn('⚠️ Supabase not initialized and mocks are disabled. Application will not function correctly without env vars.');
+}
+
 export const isSupabaseConfigured = () => !!supabase;

@@ -1,4 +1,4 @@
-import { Transaction } from '../types';
+import { Transaction } from '@/types';
 import { supabase } from './supabase';
 
 const MOCK_DELAY = 600;
@@ -6,7 +6,9 @@ const ENABLE_MOCKS = import.meta.env.VITE_ENABLE_MOCKS === 'true';
 
 export const transactionService = {
     getAll: async (): Promise<Transaction[]> => {
-        if (!ENABLE_MOCKS && supabase) {
+        if (!ENABLE_MOCKS) {
+            if (!supabase) throw new Error('Supabase client not initialized. Check your environment variables.');
+
             const { data, error } = await supabase
                 .from('transactions')
                 .select('*')
@@ -55,7 +57,9 @@ export const transactionService = {
     },
 
     create: async (transaction: Omit<Transaction, 'id'>): Promise<Transaction> => {
-        if (!ENABLE_MOCKS && supabase) {
+        if (!ENABLE_MOCKS) {
+            if (!supabase) throw new Error('Supabase client not initialized. Check your environment variables.');
+
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) throw new Error('Usuário não autenticado');
 
@@ -104,7 +108,9 @@ export const transactionService = {
     },
 
     delete: async (id: string): Promise<void> => {
-        if (!ENABLE_MOCKS && supabase) {
+        if (!ENABLE_MOCKS) {
+            if (!supabase) throw new Error('Supabase client not initialized. Check your environment variables.');
+
             const { error } = await supabase
                 .from('transactions')
                 .delete()

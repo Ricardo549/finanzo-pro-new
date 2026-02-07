@@ -1,5 +1,5 @@
 import { api } from './api';
-import { LoginDTO, RegisterDTO, AuthResponse, User } from '../types';
+import { LoginDTO, RegisterDTO, AuthResponse, User } from '@/types';
 import { LoginSchema, RegisterSchema } from './schemas';
 import { tokenService } from './token.service';
 import { supabase } from './supabase';
@@ -14,7 +14,9 @@ export const authService = {
             throw new Error(validation.error.errors[0].message);
         }
 
-        if (!ENABLE_MOCKS && supabase) {
+        if (!ENABLE_MOCKS) {
+            if (!supabase) throw new Error('Supabase client not initialized. Check your environment variables.');
+
             const { data: authData, error } = await supabase.auth.signInWithPassword({
                 email: data.email,
                 password: data.password || '',
@@ -64,7 +66,9 @@ export const authService = {
             throw new Error(validation.error.errors[0].message);
         }
 
-        if (!ENABLE_MOCKS && supabase) {
+        if (!ENABLE_MOCKS) {
+            if (!supabase) throw new Error('Supabase client not initialized. Check your environment variables.');
+
             const { data: authData, error } = await supabase.auth.signUp({
                 email: data.email,
                 password: data.password || 'temp123456', // Supabase needs password even for Oauth placeholders
@@ -115,7 +119,8 @@ export const authService = {
     },
 
     logout: async () => {
-        if (!ENABLE_MOCKS && supabase) {
+        if (!ENABLE_MOCKS) {
+            if (!supabase) throw new Error('Supabase client not initialized. Check your environment variables.');
             await supabase.auth.signOut();
         }
         tokenService.removeToken();

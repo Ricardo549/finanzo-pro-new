@@ -1,5 +1,5 @@
-
-import { GoogleGenAI, Type } from "@google/genai";
+import { Type } from "@google/genai";
+import { supabase } from "./supabase";
 
 const SYSTEM_INSTRUCTION = `
 # ROLE
@@ -20,15 +20,9 @@ export const callFinanzoAI = async (
   input: string,
   imageBlob?: { data: string; mimeType: string }
 ) => {
-  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-  if (!apiKey || apiKey === 'YOUR_API_KEY_HERE') {
-    return "⚠️ Configuração Pendente: Adicione sua API Key do Google Gemini no arquivo .env.local";
-  }
-  const ai = new GoogleGenAI({ apiKey });
+  if (!supabase) return "⚠️ Erro: Supabase não inicializado.";
 
-  // Para SCAN com imagem, o flash-preview é excelente e rápido
   // Default model configuration
-  const model = "gemini-1.5-flash";
   const config: any = {
     systemInstruction: SYSTEM_INSTRUCTION
   };
@@ -62,15 +56,31 @@ export const callFinanzoAI = async (
   parts.push({ text: input || (imageBlob ? "Analise este cupom fiscal e extraia os dados." : "") });
 
   try {
-    const response = await ai.models.generateContent({
-      model: model,
-      contents: [{ role: 'user', parts: parts }],
-      config: config,
+    const { data, error } = await supabase.functions.invoke('ask-gemini', {
+      body: {
+        model: "gemini-1.5-flash",
+        contents: [{ role: 'user', parts: parts }],
+        config: config
+      }
     });
 
-    return response.text;
+    if (error) {
+      console.error("Gemini Edge Function Error:", error);
+      return "Erro ao processar solicitação com Finanzo AI (Edge).";
+    }
+
+    // The Gemini API response structure might vary slightly or be wrapped. 
+    // Usually it returns a Candidate object. 
+    // My edge function returns the raw data from Gemini API.
+    // data.candidates[0].content.parts[0].text
+    if (data?.candidates?.[0]?.content?.parts?.[0]?.text) {
+      return data.candidates[0].content.parts[0].text;
+    }
+
+    return "Resposta vazia da IA.";
+
   } catch (error) {
-    console.error("Gemini Error:", error);
-    return "Erro ao processar solicitação com Finanzo AI.";
+    console.error("Gemini Service Error:", error);
+    return "Erro crítico ao chamar IA.";
   }
 };

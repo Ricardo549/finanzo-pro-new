@@ -1,0 +1,1 @@
+import{j as r}from"./index-3sitiY3z.js";const i=({progress:s,color:a="bg-primary"})=>r.jsx("div",{className:"w-full bg-slate-100 dark:bg-slate-800 h-2 rounded-full overflow-hidden",children:r.jsx("div",{className:"h-full bg-primary transition-all duration-700",style:{width:`${Math.min(100,s)}%`}})});export{i as P};

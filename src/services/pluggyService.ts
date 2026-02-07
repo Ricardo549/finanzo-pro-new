@@ -1,66 +1,66 @@
-import axios from 'axios';
-import { Transaction } from '../types';
-
-const PLUGGY_API_URL = 'https://api.pluggy.ai';
-
-// In a real app, these should be fetched from your backend to avoid exposing secrets.
-// For this client-side demo/MVP, we'll use env vars if available, or warn.
-const CLIENT_ID = import.meta.env.VITE_PLUGGY_CLIENT_ID || '';
-const CLIENT_SECRET = import.meta.env.VITE_PLUGGY_CLIENT_SECRET || '';
-
-let accessToken: string | null = null;
+import { Transaction } from '@/types';
+import { supabase } from './supabase';
 
 export const pluggyService = {
     /**
-     * Authenticates with Pluggy to get an access token.
-     * efficient: reuses token if valid (in memory).
+     * Authenticates with Pluggy to get an access token via Edge Function.
      */
     getAccessToken: async (): Promise<string> => {
-        if (accessToken) return accessToken;
+        if (!supabase) throw new Error('Supabase client not initialized');
 
-        if (!CLIENT_ID || !CLIENT_SECRET) {
-            console.warn('Pluggy keys missing! Falling back to sandbox mode or error.');
-            throw new Error('Missing Pluggy API Keys in .env');
-        }
-
-        try {
-            const response = await axios.post(`${PLUGGY_API_URL}/auth`, {
-                clientId: CLIENT_ID,
-                clientSecret: CLIENT_SECRET,
-            });
-            accessToken = response.data.apiKey;
-            return accessToken!;
-        } catch (error) {
-            console.error('Failed to auth with Pluggy:', error);
-            throw error;
-        }
-    },
-
-    /**
-     * Creates a Connect Token to initialize the Pluggy Widget.
-     */
-    createConnectToken: async (): Promise<string> => {
-        const token = await pluggyService.getAccessToken();
-        const response = await axios.post(
-            `${PLUGGY_API_URL}/connect_token`,
-            { options: { clientUserId: 'user_' + Math.random().toString(36).substr(2, 9) } }, // Unique user ID
-            { headers: { 'X-API-KEY': token } }
-        );
-        return response.data.accessToken;
-    },
-
-    /**
-     * Fetches transactions for a specific account.
-     */
-    fetchTransactions: async (accountId: string): Promise<Partial<Transaction>[]> => {
-        const token = await pluggyService.getAccessToken();
-        const response = await axios.get(`${PLUGGY_API_URL}/transactions`, {
-            headers: { 'X-API-KEY': token },
-            params: { accountId }
+        const { data, error } = await supabase.functions.invoke('connect-pluggy', {
+            body: { action: 'getAccessToken' }
         });
 
+        if (error) {
+            console.error('Pluggy Auth Error:', error);
+            throw new Error('Failed to auth with Pluggy');
+        }
+
+        return data.apiKey;
+    },
+
+    /**
+     * Creates a Connect Token to initialize the Pluggy Widget via Edge Function.
+     */
+    createConnectToken: async (): Promise<string> => {
+        if (!supabase) throw new Error('Supabase client not initialized');
+
+        // We can pass options if needed, but for now we generate user ID in the backend or here?
+        // Let's generate it here for now as part of options to match previous logic, 
+        // or let backend handle it. The backend implementation I wrote used `body || {}`.
+        // Let's pass the clientUserId in body options.
+        const clientUserId = 'user_' + Math.random().toString(36).substr(2, 9);
+
+        const { data, error } = await supabase.functions.invoke('connect-pluggy', {
+            body: {
+                action: 'createConnectToken',
+                body: { options: { clientUserId } }
+            }
+        });
+
+        if (error) throw new Error('Failed to create connect token');
+
+        return data.accessToken;
+    },
+
+    /**
+     * Fetches transactions for a specific account via Edge Function.
+     */
+    fetchTransactions: async (accountId: string): Promise<Partial<Transaction>[]> => {
+        if (!supabase) throw new Error('Supabase client not initialized');
+
+        const { data, error } = await supabase.functions.invoke('connect-pluggy', {
+            body: {
+                action: 'fetchTransactions',
+                body: { accountId }
+            }
+        });
+
+        if (error) throw new Error('Failed to fetch transactions');
+
         // Map Pluggy transactions to our App's Transaction type
-        return response.data.results.map((pt: any) => ({
+        return data.results.map((pt: any) => ({
             description: pt.description,
             amount: Math.abs(pt.amount),
             date: pt.date ? pt.date.split('T')[0] : new Date().toISOString().split('T')[0],
