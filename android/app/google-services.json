@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "67117974044",
+    "project_id": "finanzo-pro",
+    "storage_bucket": "finanzo-pro.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:67117974044:android:c92a77ef661e6a593cd5d9",
+        "android_client_info": {
+          "package_name": "app.finanzopro.cloud"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCZqYeKE6se_vKkuB2szbdmmmGQrsKGhZg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
